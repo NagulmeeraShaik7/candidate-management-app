@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import CandidateForm from "./CandidateForm";
 import FilterSidebar from "./FilterSidebar";
+import { useNavigate } from "react-router-dom";
 import "./CandidateTable.css";
 
 const CANDIDATES_PER_PAGE = 5;
@@ -18,23 +19,60 @@ const CandidateTable = () => {
   const [filters, setFilters] = useState({});
   const [deleteCandidate, setDeleteCandidate] = useState(null);
 
+  const navigate = useNavigate();
+
   const fetchCandidates = async () => {
     setLoading(true);
     setFetchError("");
     try {
       const response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates");
+      if (!response.ok) {
+        if ([400, 404, 500].includes(response.status)) {
+          navigate(`/error/${response.status}`);
+          return;
+        }
+        setFetchError("Failed to load candidates. Please try again.");
+        setCandidates([]);
+        setLoading(false);
+        return;
+      }
       const result = await response.json();
       setCandidates(Array.isArray(result.data) ? result.data : []);
+     
     } catch (error) {
       setCandidates([]);
-      setFetchError("Failed to load candidates. Please try again.");
+      navigate("/error/500");
     }
     setLoading(false);
   };
 
   useEffect(() => {
+    const fetchCandidates = async () => {
+      setLoading(true);
+      setFetchError("");
+      try {
+        const response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates");
+        if (!response.ok) {
+          if ([400, 404, 500].includes(response.status)) {
+            navigate(`/error/${response.status}`);
+            return;
+          }
+          setFetchError("Failed to load candidates. Please try again.");
+          setCandidates([]);
+          setLoading(false);
+          return;
+        }
+        const result = await response.json();
+        setCandidates(Array.isArray(result.data) ? result.data : []);
+       
+      } catch (error) {
+        setCandidates([]);
+        navigate("/error/500");
+      }
+      setLoading(false);
+    };
     fetchCandidates();
-  }, []);
+  }, [navigate]);
 
   // Filtering logic
   const filteredCandidates = candidates.filter((c) => {

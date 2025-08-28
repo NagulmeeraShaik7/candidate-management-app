@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./CandidateForm.css";
 
 const phonePattern = /^\+\d{1,3}-\d{10}$/;
@@ -16,6 +17,7 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
   });
   const [formErrors, setFormErrors] = useState({});
   const [submitError, setSubmitError] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (candidate) {
@@ -120,6 +122,9 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
         });
       }
       if (!response.ok) {
+        if ([400, 404, 500].includes(response.status)) {
+          return navigate(`/error/${response.status}`);
+        }
         const err = await response.json();
         setSubmitError(err.error || "Failed to save candidate");
         if (err.errors) setFormErrors(err.errors);
@@ -131,8 +136,8 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
         }
       }
     } catch (error) {
-      setSubmitError("Network error: " + error.message);
-    }
+      navigate("/error/500");
+    }   
   };
 
   return (
