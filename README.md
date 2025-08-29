@@ -145,5 +145,7 @@ If you want to use your own backend, update the API endpoint in the source code.
 
 After building the app (`npm run build`), deploy the contents of the `build/` directory to your preferred static hosting service (e.g., Netlify, Vercel, GitHub Pages).
 
+- Deployment URL: https://candidate-management-app-tan.vercel.app/
+
 ---
 
