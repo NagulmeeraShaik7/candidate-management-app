@@ -1,11 +1,19 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, useParams } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, useParams, Navigate } from "react-router-dom";
 import CandidateTable from "./components/CandidateTable";
 import ErrorPage from "./components/ErrorPage";
+import Register from "./components/Register";
+import Login from "./components/Login";
 
 function ErrorPageWrapper() {
   const { code } = useParams();
   return <ErrorPage code={parseInt(code, 10)} />;
+}
+
+// Protected route wrapper
+function PrivateRoute({ children }) {
+  const token = localStorage.getItem("token");
+  return token ? children : <Navigate to="/login" replace />;
 }
 
 const App = () => {
@@ -13,7 +21,16 @@ const App = () => {
     <Router>
       <div className="p-6">
         <Routes>
-          <Route path="/" element={<CandidateTable />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <CandidateTable />
+              </PrivateRoute>
+            }
+          />
           <Route path="/error/:code" element={<ErrorPageWrapper />} />
           <Route path="*" element={<ErrorPage code={404} />} />
         </Routes>
