@@ -21,6 +21,28 @@ const CandidateTable = () => {
 
   const navigate = useNavigate();
 
+  // 🔹 Logout API Call
+  const handleLogout = async () => {
+    try {
+      const response = await fetch("https://candidate-management-app-backend.onrender.com/api/auth/logout", {
+        method: "POST",
+      });
+
+      if (response.ok) {
+        // Clear token/session
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
+
+        // Redirect to login
+        navigate("/login");
+      } else {
+        setFetchError("Failed to logout. Please try again.");
+      }
+    } catch (error) {
+      setFetchError("Logout request failed.");
+    }
+  };
+
   const fetchCandidates = async () => {
     setLoading(true);
     setFetchError("");
@@ -38,7 +60,6 @@ const CandidateTable = () => {
       }
       const result = await response.json();
       setCandidates(Array.isArray(result.data) ? result.data : []);
-     
     } catch (error) {
       setCandidates([]);
       navigate("/error/500");
@@ -124,7 +145,8 @@ const CandidateTable = () => {
   const handleDelete = (candidate) => {
     setDeleteCandidate(candidate);
   };
-
+ 
+ 
   const confirmDelete = async () => {
     if (!deleteCandidate) return;
     try {
@@ -173,6 +195,10 @@ const CandidateTable = () => {
             title="Show Filters"
           >
             <i className="bi bi-funnel-fill"></i>
+          </button>
+          {/* 🔹 Logout Button */}
+          <button className="logout-btn" onClick={handleLogout} title="Logout">
+            <i className="bi bi-box-arrow-right"></i> Logout
           </button>
         </div>
       </div>
