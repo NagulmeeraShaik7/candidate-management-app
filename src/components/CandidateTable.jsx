@@ -59,7 +59,8 @@ const CandidateTable = () => {
         return;
       }
       const result = await response.json();
-      setCandidates(Array.isArray(result.data) ? result.data : []);
+      // Extract the results array from result.data.results
+      setCandidates(Array.isArray(result.data?.results) ? result.data.results : []);
     } catch (error) {
       setCandidates([]);
       navigate("/error/500");
@@ -68,30 +69,6 @@ const CandidateTable = () => {
   };
 
   useEffect(() => {
-    const fetchCandidates = async () => {
-      setLoading(true);
-      setFetchError("");
-      try {
-        const response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates");
-        if (!response.ok) {
-          if ([400, 404, 500].includes(response.status)) {
-            navigate(`/error/${response.status}`);
-            return;
-          }
-          setFetchError("Failed to load candidates. Please try again.");
-          setCandidates([]);
-          setLoading(false);
-          return;
-        }
-        const result = await response.json();
-        setCandidates(Array.isArray(result.data) ? result.data : []);
-       
-      } catch (error) {
-        setCandidates([]);
-        navigate("/error/500");
-      }
-      setLoading(false);
-    };
     fetchCandidates();
   }, [navigate]);
 

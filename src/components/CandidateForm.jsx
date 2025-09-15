@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./CandidateForm.css";
 
-const phonePattern = /^\+\d{1,3}-\d{10}$/;
+const phonePattern = /^\+\d{1,3}[-\s]?\d{10}$/;
 
 const CandidateForm = ({ onClose, onSaved, candidate }) => {
   const [form, setForm] = useState({
