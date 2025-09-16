@@ -21,23 +21,26 @@ const CandidateTable = () => {
 
   const navigate = useNavigate();
 
+  // 🔹 Helper: get stored token
+  const getToken = () =>
+    localStorage.getItem("token") || sessionStorage.getItem("token");
+
+  
+
   // 🔹 Logout API Call
   const handleLogout = async () => {
     try {
-      const response = await fetch("https://candidate-management-app-backend.onrender.com/api/auth/logout", {
+      const token = getToken();
+      await fetch("https://candidate-management-app-backend.onrender.com/api/auth/logout", {
         method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (response.ok) {
-        // Clear token/session
-        localStorage.removeItem("token");
-        sessionStorage.removeItem("token");
+      // Clear token/session
+      localStorage.removeItem("token");
+      sessionStorage.removeItem("token");
 
-        // Redirect to login
-        navigate("/login");
-      } else {
-        setFetchError("Failed to logout. Please try again.");
-      }
+      navigate("/login");
     } catch (error) {
       setFetchError("Logout request failed.");
     }
@@ -47,8 +50,25 @@ const CandidateTable = () => {
     setLoading(true);
     setFetchError("");
     try {
-      const response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates");
+      const token = getToken();
+      //console.log("Token:---------------", token);
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       if (!response.ok) {
+        if ([401, 403].includes(response.status)) {
+          // Unauthorized → go back to login
+          localStorage.removeItem("token");
+          sessionStorage.removeItem("token");
+          navigate("/login");
+          return;
+        }
         if ([400, 404, 500].includes(response.status)) {
           navigate(`/error/${response.status}`);
           return;
@@ -58,8 +78,8 @@ const CandidateTable = () => {
         setLoading(false);
         return;
       }
+
       const result = await response.json();
-      // Extract the results array from result.data.results
       setCandidates(Array.isArray(result.data?.results) ? result.data.results : []);
     } catch (error) {
       setCandidates([]);
@@ -74,28 +94,37 @@ const CandidateTable = () => {
 
   // Filtering logic
   const filteredCandidates = candidates.filter((c) => {
-    // Search bar filter
     const matchesSearch = [c.name, c.email, c.phone].some((field) =>
       field.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    // Gender filter
     const matchesGender = !filters.gender || c.gender === filters.gender;
-    // Qualification filter (substring match, case-insensitive)
-    const matchesQualification = !filters.qualification || (c.highestqualification || "").toLowerCase().includes(filters.qualification.toLowerCase());
-    // Experience filter
+    const matchesQualification =
+      !filters.qualification ||
+      (c.highestqualification || "")
+        .toLowerCase()
+        .includes(filters.qualification.toLowerCase());
     const expNum = parseInt(c.experience);
     const minExp = filters.expMin ? parseInt(filters.expMin) : null;
     const maxExp = filters.expMax ? parseInt(filters.expMax) : null;
-    const matchesExp = (
-      (minExp === null || (expNum >= minExp)) &&
-      (maxExp === null || (expNum <= maxExp))
+    const matchesExp =
+      (minExp === null || expNum >= minExp) &&
+      (maxExp === null || expNum <= maxExp);
+    const matchesSkills =
+      !filters.skills ||
+      c.skills.some((skill) =>
+        skill.toLowerCase().includes(filters.skills.toLowerCase())
+      );
+    return (
+      matchesSearch &&
+      matchesGender &&
+      matchesQualification &&
+      matchesExp &&
+      matchesSkills
     );
-    // Skills filter (substring match, case-insensitive, any skill)
-    const matchesSkills = !filters.skills || c.skills.some(skill => skill.toLowerCase().includes(filters.skills.toLowerCase()));
-    return matchesSearch && matchesGender && matchesQualification && matchesExp && matchesSkills;
   });
 
-  const totalPages = Math.ceil(filteredCandidates.length / CANDIDATES_PER_PAGE) || 1;
+  const totalPages =
+    Math.ceil(filteredCandidates.length / CANDIDATES_PER_PAGE) || 1;
 
   const paginatedCandidates = filteredCandidates.slice(
     (page - 1) * CANDIDATES_PER_PAGE,
@@ -122,18 +151,34 @@ const CandidateTable = () => {
   const handleDelete = (candidate) => {
     setDeleteCandidate(candidate);
   };
- 
- 
+
   const confirmDelete = async () => {
     if (!deleteCandidate) return;
     try {
-      const response = await fetch(`https://candidate-management-app-backend.onrender.com/api/candidates/${deleteCandidate._id || deleteCandidate.id}`, {
-        method: "DELETE",
-      });
+      const token = getToken();
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(
+        `https://candidate-management-app-backend.onrender.com/api/candidates/${
+          deleteCandidate._id || deleteCandidate.id
+        }`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
       if (response.ok) {
         setSuccessMsg("Candidate deleted successfully!");
         fetchCandidates();
         setTimeout(() => setSuccessMsg(""), 2500);
+      } else if ([401, 403].includes(response.status)) {
+        localStorage.removeItem("token");
+        sessionStorage.removeItem("token");
+        navigate("/login");
       } else {
         setFetchError("Failed to delete candidate.");
       }
@@ -173,23 +218,27 @@ const CandidateTable = () => {
           >
             <i className="bi bi-funnel-fill"></i>
           </button>
-          {/* 🔹 Logout Button */}
           <button className="logout-btn" onClick={handleLogout} title="Logout">
             <i className="bi bi-box-arrow-right"></i> Logout
           </button>
         </div>
       </div>
 
-      {showFilter && <FilterSidebar onClose={() => setShowFilter(false)} onFilter={setFilters} />}
+      {showFilter && (
+        <FilterSidebar
+          onClose={() => setShowFilter(false)}
+          onFilter={setFilters}
+        />
+      )}
 
       {successMsg && (
-        <div style={{textAlign: 'center', color: '#16a34a', fontWeight: 600, marginBottom: '1rem', fontSize: '1.1rem', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '0.5rem', padding: '0.5rem 1rem'}}> {successMsg} </div>
+        <div className="success-banner">{successMsg}</div>
       )}
       {loading && (
-        <div style={{textAlign: 'center', color: '#2563eb', fontWeight: 500, marginBottom: '1rem', fontSize: '1.1rem'}}>Loading candidates...</div>
+        <div className="loading-banner">Loading candidates...</div>
       )}
       {fetchError && (
-        <div style={{textAlign: 'center', color: '#ef4444', fontWeight: 500, marginBottom: '1rem', fontSize: '1.1rem', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '0.5rem', padding: '0.5rem 1rem'}}>{fetchError}</div>
+        <div className="error-banner">{fetchError}</div>
       )}
 
       <table className="candidate-table">
@@ -202,7 +251,7 @@ const CandidateTable = () => {
             <th>Gender</th>
             <th>Experience</th>
             <th>Skills/Technology</th>
-            <th style={{ textAlign: 'center' }}>Actions</th>
+            <th style={{ textAlign: "center" }}>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -215,7 +264,7 @@ const CandidateTable = () => {
               <td>{c.gender}</td>
               <td>{c.experience}</td>
               <td>{c.skills.join(", ")}</td>
-              <td style={{ textAlign: 'center' }}>
+              <td style={{ textAlign: "center" }}>
                 <button
                   className="action-btn update-btn"
                   title="Update"
@@ -281,11 +330,10 @@ const CandidateTable = () => {
             <div className="delete-icon">
               <i className="bi bi-exclamation-triangle-fill"></i>
             </div>
-            <div className="delete-title">
-              Delete Candidate?
-            </div>
+            <div className="delete-title">Delete Candidate?</div>
             <div className="delete-desc">
-              Are you sure you want to delete <b>{deleteCandidate.name}</b>? This action cannot be undone.
+              Are you sure you want to delete <b>{deleteCandidate.name}</b>? This
+              action cannot be undone.
             </div>
             <div className="delete-actions">
               <button

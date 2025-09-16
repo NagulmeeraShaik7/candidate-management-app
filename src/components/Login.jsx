@@ -1,37 +1,63 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // 👁 icons
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import "./Login.css";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // toggle state
+  const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
+    setLoading(true);
+
     try {
-      const response = await fetch("https://candidate-management-app-backend.onrender.com/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await fetch(
+        "https://candidate-management-app-backend.onrender.com/api/auth/login",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: email.trim(),
+            password: password.trim(),
+          }),
+        }
+      );
+
       const data = await response.json();
+
       if (!response.ok) {
-        setError(data.message || "Login failed");
+        setError(data.message || data.error || "Login failed");
         setSuccess("");
+        setLoading(false);
         return;
       }
-      setSuccess("Logged in successfully");
-      localStorage.setItem("token", data.token);
+
+      setSuccess("✅ Logged in successfully!");
+      // get token depending on backend response structure
+const token = data.data?.token || data.token;
+if (!token) {
+  setError("Token not found in response");
+  return;
+}
+
+localStorage.setItem("token", token);
+
+
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       setError("Something went wrong. Please try again.");
+      setSuccess("");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -52,7 +78,7 @@ const Login = () => {
               required
             />
           </div>
-          <div className="input-wrapper">
+          <div className="input-wrapper password-input">
             <input
               type={showPassword ? "text" : "password"}
               placeholder="Password"
@@ -62,13 +88,22 @@ const Login = () => {
             />
             <span
               className="password-toggle"
+              role="button"
+              tabIndex={0}
               onClick={() => setShowPassword(!showPassword)}
+              onKeyDown={(e) =>
+                e.key === "Enter" && setShowPassword(!showPassword)
+              }
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
-          <button type="submit">Login</button>
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
+
         <p>
           Don’t have an account?{" "}
           <span className="link" onClick={() => navigate("/register")}>
