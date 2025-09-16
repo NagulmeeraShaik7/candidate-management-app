@@ -4,7 +4,7 @@ import FilterSidebar from "./FilterSidebar";
 import { useNavigate } from "react-router-dom";
 import "./CandidateTable.css";
 
-const CANDIDATES_PER_PAGE = 5;
+const CANDIDATES_PER_PAGE = 10;
 
 const CandidateTable = () => {
   const [candidates, setCandidates] = useState([]);
@@ -12,6 +12,7 @@ const CandidateTable = () => {
   const [showForm, setShowForm] = useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -25,16 +26,17 @@ const CandidateTable = () => {
   const getToken = () =>
     localStorage.getItem("token") || sessionStorage.getItem("token");
 
-  
-
   // 🔹 Logout API Call
   const handleLogout = async () => {
     try {
       const token = getToken();
-      await fetch("https://candidate-management-app-backend.onrender.com/api/auth/logout", {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await fetch(
+        "https://candidate-management-app-backend.onrender.com/api/auth/logout",
+        {
+          method: "POST",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
 
       // Clear token/session
       localStorage.removeItem("token");
@@ -46,24 +48,25 @@ const CandidateTable = () => {
     }
   };
 
-  const fetchCandidates = async () => {
+  const fetchCandidates = async (currentPage = page) => {
     setLoading(true);
     setFetchError("");
     try {
       const token = getToken();
-      //console.log("Token:---------------", token);
       if (!token) {
         navigate("/login");
         return;
       }
 
-      const response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(
+        `https://candidate-management-app-backend.onrender.com/api/candidates?page=${currentPage}&limit=${CANDIDATES_PER_PAGE}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       if (!response.ok) {
         if ([401, 403].includes(response.status)) {
-          // Unauthorized → go back to login
           localStorage.removeItem("token");
           sessionStorage.removeItem("token");
           navigate("/login");
@@ -81,6 +84,7 @@ const CandidateTable = () => {
 
       const result = await response.json();
       setCandidates(Array.isArray(result.data?.results) ? result.data.results : []);
+      setTotalPages(Math.ceil(result.data?.meta?.total / CANDIDATES_PER_PAGE));
     } catch (error) {
       setCandidates([]);
       navigate("/error/500");
@@ -89,54 +93,20 @@ const CandidateTable = () => {
   };
 
   useEffect(() => {
-    fetchCandidates();
-  }, [navigate]);
-
-  // Filtering logic
-  const filteredCandidates = candidates.filter((c) => {
-    const matchesSearch = [c.name, c.email, c.phone].some((field) =>
-      field.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const matchesGender = !filters.gender || c.gender === filters.gender;
-    const matchesQualification =
-      !filters.qualification ||
-      (c.highestqualification || "")
-        .toLowerCase()
-        .includes(filters.qualification.toLowerCase());
-    const expNum = parseInt(c.experience);
-    const minExp = filters.expMin ? parseInt(filters.expMin) : null;
-    const maxExp = filters.expMax ? parseInt(filters.expMax) : null;
-    const matchesExp =
-      (minExp === null || expNum >= minExp) &&
-      (maxExp === null || expNum <= maxExp);
-    const matchesSkills =
-      !filters.skills ||
-      c.skills.some((skill) =>
-        skill.toLowerCase().includes(filters.skills.toLowerCase())
-      );
-    return (
-      matchesSearch &&
-      matchesGender &&
-      matchesQualification &&
-      matchesExp &&
-      matchesSkills
-    );
-  });
-
-  const totalPages =
-    Math.ceil(filteredCandidates.length / CANDIDATES_PER_PAGE) || 1;
-
-  const paginatedCandidates = filteredCandidates.slice(
-    (page - 1) * CANDIDATES_PER_PAGE,
-    page * CANDIDATES_PER_PAGE
-  );
+    fetchCandidates(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+    }
   };
 
   const handleCandidateSaved = () => {
-    fetchCandidates();
+    // After adding → go to last page
+    fetchCandidates(totalPages);
+    setPage(totalPages);
     setShowForm(false);
     setEditCandidate(null);
     setSuccessMsg("Candidate saved successfully!");
@@ -173,7 +143,7 @@ const CandidateTable = () => {
 
       if (response.ok) {
         setSuccessMsg("Candidate deleted successfully!");
-        fetchCandidates();
+        fetchCandidates(page);
         setTimeout(() => setSuccessMsg(""), 2500);
       } else if ([401, 403].includes(response.status)) {
         localStorage.removeItem("token");
@@ -191,6 +161,37 @@ const CandidateTable = () => {
   const cancelDelete = () => {
     setDeleteCandidate(null);
   };
+
+  // 🔹 Filtering logic (client-side search + filter on current page)
+  const filteredCandidates = candidates.filter((c) => {
+    const matchesSearch = [c.name, c.email, c.phone].some((field) =>
+      field.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const matchesGender = !filters.gender || c.gender === filters.gender;
+    const matchesQualification =
+      !filters.qualification ||
+      (c.highestqualification || "")
+        .toLowerCase()
+        .includes(filters.qualification.toLowerCase());
+    const expNum = parseInt(c.experience);
+    const minExp = filters.expMin ? parseInt(filters.expMin) : null;
+    const maxExp = filters.expMax ? parseInt(filters.expMax) : null;
+    const matchesExp =
+      (minExp === null || expNum >= minExp) &&
+      (maxExp === null || expNum <= maxExp);
+    const matchesSkills =
+      !filters.skills ||
+      c.skills.some((skill) =>
+        skill.toLowerCase().includes(filters.skills.toLowerCase())
+      );
+    return (
+      matchesSearch &&
+      matchesGender &&
+      matchesQualification &&
+      matchesExp &&
+      matchesSkills
+    );
+  });
 
   return (
     <div className="candidate-table-container">
@@ -231,15 +232,9 @@ const CandidateTable = () => {
         />
       )}
 
-      {successMsg && (
-        <div className="success-banner">{successMsg}</div>
-      )}
-      {loading && (
-        <div className="loading-banner">Loading candidates...</div>
-      )}
-      {fetchError && (
-        <div className="error-banner">{fetchError}</div>
-      )}
+      {successMsg && <div className="success-banner">{successMsg}</div>}
+      {loading && <div className="loading-banner">Loading candidates...</div>}
+      {fetchError && <div className="error-banner">{fetchError}</div>}
 
       <table className="candidate-table">
         <thead>
@@ -255,7 +250,7 @@ const CandidateTable = () => {
           </tr>
         </thead>
         <tbody>
-          {paginatedCandidates.map((c, index) => (
+          {filteredCandidates.map((c, index) => (
             <tr key={c._id || c.id || index}>
               <td>{c.name}</td>
               <td>{c.email}</td>
