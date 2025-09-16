@@ -48,12 +48,17 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+
     // Live validation for phone
     if (name === "phone") {
       if (!value) {
         setFormErrors((prev) => ({ ...prev, phone: "Phone is required" }));
       } else if (!phonePattern.test(value)) {
-        setFormErrors((prev) => ({ ...prev, phone: "Phone must be in the format +<country_code>-<10_digits> (e.g. +91-9848012345)" }));
+        setFormErrors((prev) => ({
+          ...prev,
+          phone:
+            "Phone must be in the format +<country_code>-<10_digits> (e.g. +91-9848012345)",
+        }));
       } else {
         setFormErrors((prev) => ({ ...prev, phone: "" }));
       }
@@ -68,7 +73,10 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
       if (!value) {
         setFormErrors((prev) => ({ ...prev, phone: "Phone is required" }));
       } else if (!phonePattern.test(value)) {
-        setFormErrors((prev) => ({ ...prev, phone: "Phone must be in the format (e.g. +91-9848012345)" }));
+        setFormErrors((prev) => ({
+          ...prev,
+          phone: "Phone must be in the format (e.g. +91-9848012345)",
+        }));
       } else {
         setFormErrors((prev) => ({ ...prev, phone: "" }));
       }
@@ -82,7 +90,10 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
     setFormErrors((prev) => ({ ...prev, skills: "" }));
   };
   const handleSkillsBlur = () => {
-    const skillsArr = form.skillsInput.split(",").map(s => s.trim()).filter(Boolean);
+    const skillsArr = form.skillsInput
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     setForm((prev) => ({ ...prev, skills: skillsArr }));
   };
 
@@ -90,7 +101,8 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
     e.preventDefault();
     setFormErrors({});
     setSubmitError("");
-    // Basic required check for UX
+
+    // Basic required check
     if (!form.name || !form.phone || !form.email) {
       setFormErrors({
         name: !form.name ? "Name is required" : undefined,
@@ -99,28 +111,48 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
       });
       return;
     }
+
     try {
       let response;
       const payload = {
         ...form,
-        skills: form.skillsInput.split(",").map(s => s.trim()).filter(Boolean),
+        skills: form.skillsInput
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
       };
+
+      // 🔹 Add login token from localStorage/sessionStorage
+      const token = localStorage.getItem("token");
+
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      };
+
       if (candidate && (candidate._id || candidate.id)) {
         // Edit mode
         const id = candidate._id || candidate.id;
-        response = await fetch(`https://candidate-management-app-backend.onrender.com/api/candidates/${id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        response = await fetch(
+          `https://candidate-management-app-backend.onrender.com/api/candidates/${id}`,
+          {
+            method: "PUT",
+            headers,
+            body: JSON.stringify(payload),
+          }
+        );
       } else {
         // Add mode
-        response = await fetch("https://candidate-management-app-backend.onrender.com/api/candidates", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        response = await fetch(
+          "https://candidate-management-app-backend.onrender.com/api/candidates",
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify(payload),
+          }
+        );
       }
+
       if (!response.ok) {
         if ([400, 404, 500].includes(response.status)) {
           return navigate(`/error/${response.status}`);
@@ -137,19 +169,36 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
       }
     } catch (error) {
       navigate("/error/500");
-    }   
+    }
   };
 
   return (
-    <form className="candidate-form" style={{ fontFamily: 'Poppins, Arial, sans-serif' }} onSubmit={handleSubmit}>
-      <h2 className="candidate-form-title" style={candidate ? { color: '#2563eb' } : {}}>
-        <i className={candidate ? "bi bi-pencil-square" : "bi bi-person-plus-fill"} style={{ color: candidate ? '#2563eb' : '#0e7490' }}></i>
-        {candidate ? 'Edit Candidate' : 'Add Candidate'}
+    <form
+      className="candidate-form"
+      style={{ fontFamily: "Poppins, Arial, sans-serif" }}
+      onSubmit={handleSubmit}
+    >
+      <h2
+        className="candidate-form-title"
+        style={candidate ? { color: "#2563eb" } : {}}
+      >
+        <i
+          className={
+            candidate ? "bi bi-pencil-square" : "bi bi-person-plus-fill"
+          }
+          style={{ color: candidate ? "#2563eb" : "#0e7490" }}
+        ></i>
+        {candidate ? "Edit Candidate" : "Add Candidate"}
       </h2>
 
       <div className="input-group">
         <i className="bi bi-person input-icon"></i>
-        <input name="name" onChange={handleChange} placeholder="Name" />
+        <input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Name"
+        />
       </div>
       {formErrors.name && <div className="form-error">{formErrors.name}</div>}
 
@@ -157,6 +206,7 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
         <i className="bi bi-telephone input-icon"></i>
         <input
           name="phone"
+          value={form.phone}
           onChange={handleChange}
           onBlur={handleBlur}
           placeholder="Phone (e.g. +91-9848012345)"
@@ -167,32 +217,49 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
 
       <div className="input-group">
         <i className="bi bi-book input-icon"></i>
-        <input name="highestqualification" onChange={handleChange} placeholder="Highest Qualification" />
+        <input
+          name="highestqualification"
+          value={form.highestqualification}
+          onChange={handleChange}
+          placeholder="Highest Qualification"
+        />
       </div>
-      {formErrors.highestqualification && <div className="form-error">{formErrors.highestqualification}</div>}
+      {formErrors.highestqualification && (
+        <div className="form-error">{formErrors.highestqualification}</div>
+      )}
 
       <div className="input-group">
         <i className="bi bi-envelope input-icon"></i>
         <input
           name="email"
+          value={form.email}
           onChange={handleChange}
           placeholder="Email"
-          value={form.email}
           disabled={!!candidate}
-          style={candidate ? { background: '#f3f4f6', color: '#9ca3af', cursor: 'not-allowed' } : {}}
+          style={
+            candidate
+              ? {
+                  background: "#f3f4f6",
+                  color: "#9ca3af",
+                  cursor: "not-allowed",
+                }
+              : {}
+          }
         />
       </div>
       {formErrors.email && <div className="form-error">{formErrors.email}</div>}
 
       <div className="input-group">
         <i className="bi bi-gender-ambiguous input-icon"></i>
-        <select name="gender" onChange={handleChange} value={form.gender}>
+        <select name="gender" value={form.gender} onChange={handleChange}>
           <option>Male</option>
           <option>Female</option>
           <option>Other</option>
         </select>
       </div>
-      {formErrors.gender && <div className="form-error">{formErrors.gender}</div>}
+      {formErrors.gender && (
+        <div className="form-error">{formErrors.gender}</div>
+      )}
 
       <div className="input-group">
         <i className="bi bi-briefcase input-icon"></i>
@@ -201,11 +268,14 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
           type="number"
           min="1"
           max="30"
+          value={form.experience}
           onChange={handleChange}
           placeholder="Experience (years)"
         />
       </div>
-      {formErrors.experience && <div className="form-error">{formErrors.experience}</div>}
+      {formErrors.experience && (
+        <div className="form-error">{formErrors.experience}</div>
+      )}
 
       <div className="input-group">
         <i className="bi bi-lightbulb input-icon"></i>
@@ -217,13 +287,19 @@ const CandidateForm = ({ onClose, onSaved, candidate }) => {
           onBlur={handleSkillsBlur}
         />
       </div>
-      {formErrors.skills && <div className="form-error">{formErrors.skills}</div>}
+      {formErrors.skills && (
+        <div className="form-error">{formErrors.skills}</div>
+      )}
 
       {submitError && <div className="form-error">{submitError}</div>}
 
       <div className="form-actions">
-        <button type="submit" className="save-btn">Save</button>
-        <button type="button" className="cancel-btn" onClick={onClose}>Cancel</button>
+        <button type="submit" className="save-btn">
+          Save
+        </button>
+        <button type="button" className="cancel-btn" onClick={onClose}>
+          Cancel
+        </button>
       </div>
     </form>
   );
