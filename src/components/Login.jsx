@@ -1,17 +1,27 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
 import "./Login.css";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState("");
 
   const navigate = useNavigate();
+
+  const handleInputChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,8 +36,8 @@ const Login = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            email: email.trim(),
-            password: password.trim(),
+            email: formData.email.trim(),
+            password: formData.password.trim(),
           }),
         }
       );
@@ -41,17 +51,16 @@ const Login = () => {
         return;
       }
 
-      setSuccess("✅ Logged in successfully!");
-      // get token depending on backend response structure
-const token = data.data?.token || data.token;
-if (!token) {
-  setError("Token not found in response");
-  return;
-}
+      const token = data.data?.token || data.token;
+      if (!token) {
+        setError("Token not found in response");
+        setSuccess("");
+        setLoading(false);
+        return;
+      }
 
-localStorage.setItem("token", token);
-
-
+      localStorage.setItem("token", token);
+      setSuccess("Login successful! Redirecting...");
       setTimeout(() => navigate("/"), 1500);
     } catch (err) {
       setError("Something went wrong. Please try again.");
@@ -61,55 +70,159 @@ localStorage.setItem("token", token);
     }
   };
 
+  const handleRegisterRedirect = () => {
+    navigate("/register");
+  };
+
   return (
-    <div className="auth-container">
-      <div>
-        <h2>Login</h2>
-        {error && <div className="alert alert-error">⚠️ {error}</div>}
-        {success && <div className="alert alert-success">{success}</div>}
+    <div className="login-container">
+      {/* Animated Background Elements */}
+      <div className="background-overlay">
+        <div className="floating-orb orb-1"></div>
+        <div className="floating-orb orb-2"></div>
+        <div className="floating-orb orb-3"></div>
+      </div>
 
-        <form onSubmit={handleLogin} className="auth-form">
-          <div className="input-wrapper">
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
+      {/* Floating Particles */}
+      <div className="particles-container">
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={i}
+            className="particle"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${3 + Math.random() * 2}s`
+            }}
+          ></div>
+        ))}
+      </div>
+
+      <div className="login-content">
+        {/* Main Container */}
+        <div className="login-card">
+          {/* Header */}
+          <div className="login-header">
+            <div className="icon-container">
+              <FaLock className="header-icon" />
+            </div>
+            <h2 className="login-title">Sign In</h2>
+            <p className="login-subtitle">Welcome back, please log in</p>
           </div>
-          <div className="input-wrapper password-input">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <span
-              className="password-toggle"
-              role="button"
-              tabIndex={0}
-              onClick={() => setShowPassword(!showPassword)}
-              onKeyDown={(e) =>
-                e.key === "Enter" && setShowPassword(!showPassword)
-              }
+
+          {/* Alert Messages */}
+          {error && (
+            <div className="alert alert-error">
+              <FaExclamationCircle className="alert-icon" />
+              <span className="alert-text">{error}</span>
+            </div>
+          )}
+          
+          {success && (
+            <div className="alert alert-success">
+              <FaCheckCircle className="alert-icon" />
+              <span className="alert-text">{success}</span>
+            </div>
+          )}
+
+          {/* Form */}
+          <form onSubmit={handleLogin} className="login-form">
+            {/* Email Input */}
+            <div className="form-group">
+              <div className={`input-container ${focusedField === 'email' || formData.email ? 'active' : ''}`}>
+                <div className="input-glow"></div>
+                <div className="input-wrapper">
+                  <FaEnvelope className="input-icon" />
+                  <input
+                    type="email"
+                    id="email"
+                    value={formData.email}
+                    onChange={(e) => handleInputChange('email', e.target.value)}
+                    onFocus={() => setFocusedField('email')}
+                    onBlur={() => setFocusedField('')}
+                    required
+                    className="form-input"
+                    placeholder="Email Address"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Password Input */}
+            <div className="form-group">
+              <div className={`input-container ${focusedField === 'password' || formData.password ? 'active' : ''}`}>
+                <div className="input-glow"></div>
+                <div className="input-wrapper">
+                  <FaLock className="input-icon" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    onFocus={() => setFocusedField('password')}
+                    onBlur={() => setFocusedField('')}
+                    required
+                    minLength={6}
+                    className="form-input password-field"
+                    placeholder="Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="password-toggle"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? <FaEyeSlash /> : <FaEye />}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="submit-btn"
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
+              <div className="btn-content">
+                {loading ? (
+                  <>
+                    <div className="loading-spinner"></div>
+                    <span>Logging In...</span>
+                  </>
+                ) : (
+                  <>
+                    <FaLock className="btn-icon" />
+                    <span>Sign In</span>
+                  </>
+                )}
+              </div>
+              <div className="btn-gradient"></div>
+            </button>
+          </form>
+
+          {/* Footer */}
+          <div className="login-footer">
+            <p className="footer-text">
+              Don’t have an account?{" "}
+              <button
+                type="button"
+                onClick={handleRegisterRedirect}
+                className="register-link"
+              >
+                Register here
+              </button>
+            </p>
           </div>
+        </div>
 
-          <button type="submit" disabled={loading}>
-            {loading ? "Logging in..." : "Login"}
-          </button>
-        </form>
-
-        <p>
-          Don’t have an account?{" "}
-          <span className="link" onClick={() => navigate("/register")}>
-            Register
-          </span>
-        </p>
+        {/* Bottom Decorative Elements */}
+        <div className="decorative-dots">
+          <div className="dot dot-1"></div>
+          <div className="dot dot-2"></div>
+          <div className="dot dot-3"></div>
+        </div>
       </div>
     </div>
   );
