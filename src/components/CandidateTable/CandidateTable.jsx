@@ -196,7 +196,7 @@ const CandidateTable = () => {
   return (
     <div className="candidate-table-container">
       <div className="candidate-table-header">
-        <h1 className="candidates-heading">Candidates</h1>
+        <h1 className="candidates-heading">Candidates Dashboard</h1>
         <div className="actions">
           <div className="search-bar-wrapper">
             <span className="search-icon">
