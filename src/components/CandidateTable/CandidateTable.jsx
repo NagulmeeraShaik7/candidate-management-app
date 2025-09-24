@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import CandidateForm from "./CandidateForm";
-import FilterSidebar from "./FilterSidebar";
+import CandidateForm from "../CandidateForm/CandidateForm";
+import FilterSidebar from "../FilterSidebar/FilterSidebar";
 import { useNavigate } from "react-router-dom";
 import "./CandidateTable.css";
 
