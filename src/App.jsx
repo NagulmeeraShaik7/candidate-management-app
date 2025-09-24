@@ -1,9 +1,9 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, useParams, Navigate } from "react-router-dom";
-import CandidateTable from "./components/CandidateTable";
-import ErrorPage from "./components/ErrorPage";
-import Register from "./components/Register";
-import Login from "./components/Login";
+import CandidateTable from "./components/CandidateTable/CandidateTable";
+import ErrorPage from "./components/ErrorPage/ErrorPage";
+import Register from "./components/Register/Register";
+import Login from "./components/Login/Login";
 
 function ErrorPageWrapper() {
   const { code } = useParams();
