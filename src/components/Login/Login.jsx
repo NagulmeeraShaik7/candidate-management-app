@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaCheckCircle, FaExclamationCircle } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock, FaCheckCircle, FaExclamationCircle, FaUser } from "react-icons/fa";
 import "./Login.css";
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
+    role: ""
   });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -31,13 +32,14 @@ const Login = () => {
 
     try {
       const response = await fetch(
-        "https://candidate-management-app-backend.onrender.com/api/auth/login",
+        "http://localhost:3300/api/auth/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             email: formData.email.trim(),
             password: formData.password.trim(),
+            role: formData.role.trim()
           }),
         }
       );
@@ -167,6 +169,8 @@ const Login = () => {
                     className="form-input password-field"
                     placeholder="Password"
                   />
+                  
+
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
@@ -178,6 +182,27 @@ const Login = () => {
                 </div>
               </div>
             </div>
+
+            {/* Role Input */}
+                  <div className="form-group">
+                    <div className={`input-container ${focusedField === 'role' || formData.role ? 'active' : ''}`}>
+                      <div className="input-glow"></div>
+                      <div className="input-wrapper">
+                        <FaUser className="input-icon" />
+                        <input
+                          type="text"
+                          id="role"
+                          value={formData.role}
+                          onChange={(e) => handleInputChange('role', e.target.value)}
+                          onFocus={() => setFocusedField('role')}
+                          onBlur={() => setFocusedField('')}
+                          required
+                          className="form-input"
+                          placeholder="Role"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
             {/* Submit Button */}
             <button
