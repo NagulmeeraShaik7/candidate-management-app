@@ -62,8 +62,30 @@ const Login = () => {
       }
 
       localStorage.setItem("token", token);
+      
+      // Decode token to get user role
+      let userRole = "user"; // Default role
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        userRole = payload.role || formData.role || "user";
+        console.log("User role from token:", userRole);
+      } catch (err) {
+        console.error("Error decoding token:", err);
+        // If can't decode token, use the role from form
+        userRole = formData.role || "user";
+      }
+
       setSuccess("Login successful! Redirecting...");
-      setTimeout(() => navigate("/"), 1500);
+      
+      // Redirect based on role
+      setTimeout(() => {
+        if (userRole === "admin") {
+          navigate("/"); // Admin dashboard
+        } else {
+          navigate("/exam-dashboard"); // Candidate exam dashboard
+        }
+      }, 1500);
+      
     } catch (err) {
       setError("Something went wrong. Please try again.");
       setSuccess("");
@@ -184,25 +206,27 @@ const Login = () => {
             </div>
 
             {/* Role Input */}
-                  <div className="form-group">
-                    <div className={`input-container ${focusedField === 'role' || formData.role ? 'active' : ''}`}>
-                      <div className="input-glow"></div>
-                      <div className="input-wrapper">
-                        <FaUser className="input-icon" />
-                        <input
-                          type="text"
-                          id="role"
-                          value={formData.role}
-                          onChange={(e) => handleInputChange('role', e.target.value)}
-                          onFocus={() => setFocusedField('role')}
-                          onBlur={() => setFocusedField('')}
-                          required
-                          className="form-input"
-                          placeholder="Role"
-                        />
-                      </div>
-                    </div>
-                  </div>
+            <div className="form-group">
+              <div className={`input-container ${focusedField === 'role' || formData.role ? 'active' : ''}`}>
+                <div className="input-glow"></div>
+                <div className="input-wrapper">
+                  <FaUser className="input-icon" />
+                  <select
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) => handleInputChange('role', e.target.value)}
+                    onFocus={() => setFocusedField('role')}
+                    onBlur={() => setFocusedField('')}
+                    required
+                    className="form-input"
+                  >
+                    <option className="form-option" value="">Select Role</option>
+                    <option className="form-option" value="admin">Admin</option>
+                    <option className="form-option" value="user">candidate</option>
+                  </select>
+                </div>
+              </div>
+            </div>
 
             {/* Submit Button */}
             <button
@@ -230,7 +254,7 @@ const Login = () => {
           {/* Footer */}
           <div className="login-footer">
             <p className="footer-text">
-              Don’t have an account?{" "}
+              Don't have an account?{" "}
               <button
                 type="button"
                 onClick={handleRegisterRedirect}

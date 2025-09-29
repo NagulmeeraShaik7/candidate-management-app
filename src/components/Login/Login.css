@@ -426,6 +426,11 @@
   animation-delay: 0.8s;
 }
 
+.form-option {
+  background: rgba(255, 255, 255, 0.1);
+  color: #9ca3af;
+}
+
 /* Animations */
 @keyframes pulse {
   0%, 100% {
@@ -668,4 +673,43 @@
   .form-input:focus {
     border: 2px solid #a855f7;
   }
+}
+
+/* Server status and loading indicators */
+.server-status {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.server-status small {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  background: #e3f2fd;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  border-left: 4px solid #2196f3;
+}
+
+.loading-indicator span {
+  color: #1565c0;
+  font-size: 0.9rem;
+}
+
+.performance-note {
+  margin-top: 15px;
+  padding: 10px;
+  background: #fff3cd;
+  border-radius: 4px;
+  border-left: 4px solid #ffc107;
+}
+
+.performance-note small {
+  color: #856404;
 }
