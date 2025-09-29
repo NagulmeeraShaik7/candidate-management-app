@@ -33,7 +33,7 @@ const Register = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:3300/api/auth/register",
+        "https://candidate-management-app-backend.onrender.com/api/auth/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -226,7 +226,7 @@ const Register = () => {
               <div className="btn-content">
                 {loading ? (
                   <>
-                    <div className="loading-spinner"></div>
+                    <div className="loading-spinner-register"></div>
                     <span>Creating Account...</span>
                   </>
                 ) : (
