@@ -7,7 +7,8 @@ const Register = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: ""
+    password: "",
+    role: ""
   });
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +33,7 @@ const Register = () => {
 
     try {
       const response = await fetch(
-        "https://candidate-management-app-backend.onrender.com/api/auth/register",
+        "http://localhost:3300/api/auth/register",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -40,6 +41,7 @@ const Register = () => {
             email: formData.email.trim(),
             password: formData.password.trim(),
             name: formData.name.trim(),
+            role:formData.role
           }),
         }
       );
@@ -189,6 +191,28 @@ const Register = () => {
                   >
                     {showPassword ? <FaEyeSlash /> : <FaEye />}
                   </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Role Input */}
+
+            <div className="form-group">
+              <div className={`input-container ${focusedField === 'role' || formData.role ? 'active' : ''}`}>
+                <div className="input-glow"></div>
+                <div className="input-wrapper">
+                  <FaUser className="input-icon" />
+                  <input
+                    type="text"
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) => handleInputChange('role', e.target.value)}
+                    onFocus={() => setFocusedField('role')}
+                    onBlur={() => setFocusedField('')}
+                    required
+                    className="form-input"
+                    placeholder="Role"
+                  />
                 </div>
               </div>
             </div>
