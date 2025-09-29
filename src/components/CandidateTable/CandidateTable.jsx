@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import CandidateForm from "../CandidateForm/CandidateForm";
 import FilterSidebar from "../FilterSidebar/FilterSidebar";
+import ExamModal from "../ExamModal/ExamModal"; // New component
 import { useNavigate } from "react-router-dom";
 import "./CandidateTable.css";
 
@@ -19,6 +20,7 @@ const CandidateTable = () => {
   const [editCandidate, setEditCandidate] = useState(null);
   const [filters, setFilters] = useState({});
   const [deleteCandidate, setDeleteCandidate] = useState(null);
+  const [examModal, setExamModal] = useState({ show: false, candidate: null, loading: false });
 
   const navigate = useNavigate();
 
@@ -38,10 +40,8 @@ const CandidateTable = () => {
         }
       );
 
-      // Clear token/session
       localStorage.removeItem("token");
       sessionStorage.removeItem("token");
-
       navigate("/login");
     } catch (error) {
       setFetchError("Logout request failed.");
@@ -104,7 +104,6 @@ const CandidateTable = () => {
   };
 
   const handleCandidateSaved = () => {
-    // After adding → go to last page
     fetchCandidates(totalPages);
     setPage(totalPages);
     setShowForm(false);
@@ -162,7 +161,52 @@ const CandidateTable = () => {
     setDeleteCandidate(null);
   };
 
-  // 🔹 Filtering logic (client-side search + filter on current page)
+  // 🔹 Enhanced Take Exam functionality
+  const handleTakeExam = (candidate) => {
+    setExamModal({ show: true, candidate, loading: false });
+  };
+
+  const startExam = async () => {
+    setExamModal(prev => ({ ...prev, loading: true }));
+    
+    try {
+      const token = getToken();
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch(
+        `https://candidate-management-app-backend.onrender.com/api/exam/generate/`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ candidateId: examModal.candidate._id }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate exam");
+      }
+
+      const data = await response.json();
+      setExamModal({ show: false, candidate: null, loading: false });
+      navigate(`/exam/${data.data._id}`);
+    } catch (err) {
+      console.error("Error generating exam:", err);
+      setFetchError("Could not start exam. Please try again.");
+      setExamModal(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const closeExamModal = () => {
+    setExamModal({ show: false, candidate: null, loading: false });
+  };
+
+  // 🔹 Filtering logic
   const filteredCandidates = candidates.filter((c) => {
     const matchesSearch = [c.name, c.email, c.phone].some((field) =>
       field.toLowerCase().includes(searchTerm.toLowerCase())
@@ -274,6 +318,13 @@ const CandidateTable = () => {
                 >
                   <i className="bi bi-trash"></i>
                 </button>
+                <button
+                  className="action-btn exam-btn"
+                  title="Take Exam"
+                  onClick={() => handleTakeExam(c)}
+                >
+                  <i className="bi bi-file-earmark-medical"></i>
+                </button>
               </td>
             </tr>
           ))}
@@ -349,6 +400,15 @@ const CandidateTable = () => {
           </div>
         </div>
       )}
+
+      {/* Exam Modal */}
+      <ExamModal
+        show={examModal.show}
+        candidate={examModal.candidate}
+        loading={examModal.loading}
+        onStart={startExam}
+        onClose={closeExamModal}
+      />
     </div>
   );
 };

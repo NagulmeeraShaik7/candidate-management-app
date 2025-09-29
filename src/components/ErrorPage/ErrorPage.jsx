@@ -12,6 +12,16 @@ const errorDetails = {
     message: "Sorry, the page or resource was not found.",
     color: "#f59e42"
   },
+  403: {
+    title: "403",
+    message: "Forbidden. You don't have permission to access this resource.",
+    color: "#f59e42"
+  },
+  401: {
+    title: "401",
+    message: "Unauthorized. Please log in to access this resource.",
+    color: "#f59e42"
+  },
   500: {
     title: "500",
     message: "Internal Server Error. Please try again later.",
