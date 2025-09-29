@@ -32,7 +32,7 @@ const Login = () => {
 
     try {
       const response = await fetch(
-        "http://localhost:3300/api/auth/login",
+        "https://candidate-management-app-backend.onrender.com/api/auth/login",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -213,7 +213,7 @@ const Login = () => {
               <div className="btn-content">
                 {loading ? (
                   <>
-                    <div className="loading-spinner"></div>
+                    <div className="loading-spinner-login"></div>
                     <span>Logging In...</span>
                   </>
                 ) : (
