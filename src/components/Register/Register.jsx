@@ -41,7 +41,7 @@ const Register = () => {
             email: formData.email.trim(),
             password: formData.password.trim(),
             name: formData.name.trim(),
-            role:formData.role
+            role: formData.role
           }),
         }
       );
@@ -195,15 +195,13 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Role Input */}
-
+            {/* Role Input - Updated to Dropdown */}
             <div className="form-group">
               <div className={`input-container ${focusedField === 'role' || formData.role ? 'active' : ''}`}>
                 <div className="input-glow"></div>
                 <div className="input-wrapper">
                   <FaUser className="input-icon" />
-                  <input
-                    type="text"
+                  <select
                     id="role"
                     value={formData.role}
                     onChange={(e) => handleInputChange('role', e.target.value)}
@@ -211,8 +209,11 @@ const Register = () => {
                     onBlur={() => setFocusedField('')}
                     required
                     className="form-input"
-                    placeholder="Role"
-                  />
+                  >
+                    <option className="form-option" value="">Select Role</option>
+                    <option className="form-option" value="admin">Admin</option>
+                    <option className="form-option" value="user">Candidate</option>
+                  </select>
                 </div>
               </div>
             </div>

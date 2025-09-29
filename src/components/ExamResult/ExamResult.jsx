@@ -29,8 +29,13 @@ const ExamResult = () => {
           let status = "neutral";
           let isCorrect = false;
 
+          // Auto-grade all question types including short and descriptive
           if (q.type === "short" || q.type === "descriptive") {
-            status = "neutral";
+            // For short and descriptive answers, compare with correct answer
+            const normalizedUser = normalizeAnswer(userAnswer);
+            const normalizedCorrect = normalizeAnswer(q.correctAnswer);
+            isCorrect = normalizedUser === normalizedCorrect;
+            status = isCorrect ? "correct" : "incorrect";
           } else if (q.type === "mcq") {
             const normalizedUser = normalizeAnswer(userAnswer);
             const normalizedCorrect = normalizeAnswer(q.correctAnswer);
@@ -103,7 +108,7 @@ const ExamResult = () => {
     const badges = {
       correct: { class: "correct", text: "Correct", icon: "bi bi-check-circle" },
       incorrect: { class: "incorrect", text: "Incorrect", icon: "bi bi-x-circle" },
-      neutral: { class: "neutral", text: "Review Needed", icon: "bi bi-clock" }
+      neutral: { class: "neutral", text: "Not Answered", icon: "bi bi-dash-circle" }
     };
     const badge = badges[status] || badges.neutral;
     return (
@@ -278,21 +283,19 @@ const ExamResult = () => {
                           : ""
                       }`}
                     >
-                      {getAnswerDisplay(answer.userAnswer, answer.type)}
+                      {getAnswerDisplay(answer.userAnswer)}
                     </div>
                   </div>
 
-                  {(answer.type === "mcq" || answer.type === "msq") && (
-                    <div className="answer-section correct-answer">
-                      <div className="answer-label">
-                        <i className="bi bi-check-circle"></i>
-                        Correct Answer
-                      </div>
-                      <div className="answer-value correct">
-                        {getAnswerDisplay(answer.correctAnswer, answer.type)}
-                      </div>
+                  <div className="answer-section correct-answer">
+                    <div className="answer-label">
+                      <i className="bi bi-check-circle"></i>
+                      Correct Answer
                     </div>
-                  )}
+                    <div className="answer-value correct">
+                      {getAnswerDisplay(answer.correctAnswer)}
+                    </div>
+                  </div>
                 </div>
 
                 {(answer.type === "mcq" || answer.type === "msq") &&
@@ -332,19 +335,21 @@ const ExamResult = () => {
                     </div>
                   )}
 
-                {(answer.type === "short" || answer.type === "descriptive") && (
-                  <div className="review-notice">
-                    <div className="answer-label">
-                      <i className="bi bi-info-circle"></i>
-                      Note
-                    </div>
-                    <div className="notice-text">
-                      This {answer.type} answer requires manual review by an examiner.
-                      {answer.status === "neutral" &&
-                        " Your answer has been submitted for evaluation."}
-                    </div>
+                {/* Auto-grading notice for all question types */}
+                <div className="auto-grade-notice">
+                  <div className="answer-label">
+                    <i className="bi bi-cpu"></i>
+                    Auto-graded Result
                   </div>
-                )}
+                  <div className="notice-text">
+                    This {answer.type} question was automatically evaluated. 
+                    {answer.status === "correct" 
+                      ? " Your answer is correct." 
+                      : answer.status === "incorrect" 
+                      ? " Your answer is incorrect." 
+                      : " No answer was provided."}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
