@@ -13,6 +13,7 @@ const handleResponse = async (response) => {
   return data.data || data;
 };
 
+// Existing exam functions...
 export const getExamDetails = async (examId) => {
   try {
     console.log("📝 Fetching exam details for:", examId);
@@ -103,6 +104,52 @@ export const getExamResult = async (examId) => {
   }
 };
 
+// 🔐 PROCTORING APIs
+export const logProctoringEvent = async (examId, eventData) => {
+  try {
+    console.log("📝 Logging proctoring event:", eventData);
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/proctoring/log`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        examId,
+        ...eventData
+      }),
+    });
+
+    const data = await handleResponse(res);
+    console.log("✅ Proctoring event logged successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Failed to log proctoring event:", error);
+    throw new Error(error.message || "Failed to log proctoring event");
+  }
+};
+
+export const getProctoringLogs = async (examId) => {
+  try {
+    console.log("📊 Fetching proctoring logs for:", examId);
+    const token = getToken();
+    const res = await fetch(`${API_BASE}/proctoring/${examId}`, {
+      headers: { 
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+    });
+    
+    const data = await handleResponse(res);
+    console.log("✅ Proctoring logs fetched successfully:", data);
+    return data;
+  } catch (error) {
+    console.error("❌ Failed to fetch proctoring logs:", error);
+    throw new Error(error.message || "Failed to fetch proctoring logs");
+  }
+};
+
 // Helper function to format answers correctly for submission
 export const formatAnswersForSubmission = (questions, userAnswers) => {
   const formattedAnswers = {};
@@ -176,4 +223,4 @@ export const validateAnswersBeforeSubmit = (answers, questions) => {
 
   console.log("✅ All answers validated successfully");
   return true;
-};  
+};

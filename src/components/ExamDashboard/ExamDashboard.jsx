@@ -367,6 +367,18 @@ const ExamDashboard = () => {
             <i className="bi bi-check-circle instruction-icon"></i>
             <span>Auto-save functionality ensures no progress loss</span>
           </div>
+          <div className="instruction-item">
+            <i className="bi bi-shield-lock instruction-icon"></i>
+            <span>Proctored environment - webcam and screen monitoring</span>
+          </div>
+          <div className="instruction-item">
+            <i className="bi bi-exclamation-triangle instruction-icon"></i>
+            <span>Strictly no cheating - violations may lead to disqualification</span>
+          </div>
+          <div className="instruction-item">
+            <i className="bi bi-people instruction-icon"></i>
+            <span>Contact support team for any technical issues during the exam</span>
+          </div>
         </div>
       </div>
 
