@@ -474,3 +474,295 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+
+/* Proctoring warning styles */
+.violation-warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 10px 0;
+  color: #856404;
+}
+
+.violation-warning.high {
+  background: #f8d7da;
+  border-color: #f5c6cb;
+  color: #721c24;
+}
+
+/* Proctoring info item */
+.info-item .bi-shield-exclamation {
+  color: #dc3545;
+}
+
+/* Timer warning for proctoring */
+.timer-warning {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+
+.disqualification-banner {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #721c24;
+}
+
+.disqualification-banner i {
+  font-size: 2rem;
+  color: #dc3545;
+}
+
+.disqualification-content h4 {
+  margin: 0 0 5px 0;
+  color: #721c24;
+}
+
+.disqualification-content p {
+  margin: 0;
+  color: #721c24;
+}
+
+.submit-exam-btn.disqualified {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.submit-exam-btn.disqualified:hover {
+  background: #6c757d;
+  transform: none;
+}
+
+/* Disqualification Modal Styles */
+.disqualification-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease;
+}
+
+.disqualification-modal {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideInUp 0.4s ease;
+  border: 2px solid #dc3545;
+  overflow: hidden;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  padding: 30px;
+  text-align: center;
+  position: relative;
+}
+
+.modal-header h2 {
+  margin: 15px 0 0 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.modal-icon {
+  font-size: 4rem;
+  opacity: 0.9;
+}
+
+.modal-content {
+  padding: 30px;
+}
+
+.disqualification-reason {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 25px;
+  line-height: 1.6;
+  font-weight: 500;
+}
+
+.violation-details {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 25px;
+  border: 1px solid #e9ecef;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.detail-value {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.consequences {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.consequences h4 {
+  margin: 0 0 15px 0;
+  color: #856404;
+  font-size: 1rem;
+}
+
+.consequences ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #856404;
+}
+
+.consequences li {
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.consequences li:last-child {
+  margin-bottom: 0;
+}
+
+.modal-footer {
+  padding: 20px 30px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.redirect-countdown {
+  margin: 0 0 15px 0;
+  color: #6c757d;
+  font-size: 0.95rem;
+}
+
+.countdown-number {
+  color: #dc3545;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.immediate-redirect-btn {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.immediate-redirect-btn:hover {
+  background: #5a6268;
+  transform: translateY(-1px);
+}
+
+/* Disqualification Banner */
+.disqualification-banner {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #721c24;
+  animation: shake 0.5s ease;
+}
+
+.disqualification-banner i {
+  font-size: 2rem;
+  color: #dc3545;
+}
+
+.disqualification-content h4 {
+  margin: 0 0 5px 0;
+  color: #721c24;
+  font-weight: 600;
+}
+
+.disqualification-content p {
+  margin: 0;
+  color: #721c24;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Submit button for disqualified state */
+.submit-exam-btn.disqualified {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.submit-exam-btn.disqualified:hover {
+  background: #6c757d;
+  transform: none;
+}

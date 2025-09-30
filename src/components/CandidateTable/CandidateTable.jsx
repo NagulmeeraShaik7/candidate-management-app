@@ -101,11 +101,11 @@ const CandidateTable = () => {
     }
   };
 
+  // ✅ UPDATED: Immediately refresh list after saving candidate
   const handleCandidateSaved = () => {
-    fetchCandidates(totalPages);
-    setPage(totalPages);
     setShowForm(false);
     setEditCandidate(null);
+    fetchCandidates(page); // Re-fetch current page immediately
     setSuccessMsg("Candidate saved successfully!");
     setTimeout(() => setSuccessMsg(""), 2500);
   };
