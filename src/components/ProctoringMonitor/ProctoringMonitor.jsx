@@ -1,6 +1,6 @@
 // src/components/ProctoringMonitor/ProctoringMonitor.jsx
 import React, { useEffect, useRef, useState } from 'react';
-import { logProctoringEvent } from '../../services/examService';
+import { logProctoringEvent, logCommonProctoringEvent, ProctoringEvents } from '../../services/examService';
 import './ProctoringMonitor.css';
 
 const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) => {
@@ -62,25 +62,25 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
       startSoundDetection();
       startInspectDetection();
 
-      await logProctoringEvent({
+      // Log monitoring start using the new API
+      await logCommonProctoringEvent(
         examId,
         candidateId,
-        activityType: 'CUSTOM',
-        message: 'Proctoring monitoring started',
-        severity: 'LOW',
-        metadata: { monitoringStarted: true }
-      });
+        'CUSTOM',
+        { monitoringStarted: true, timestamp: new Date().toISOString() }
+      );
 
     } catch (error) {
       console.error('Error starting proctoring:', error);
-      await logProctoringEvent({
+      // Log failure using the new API
+      await logProctoringEvent(
         examId,
         candidateId,
-        activityType: 'CUSTOM',
-        message: 'Failed to start proctoring - camera/mic access denied',
-        severity: 'HIGH',
-        metadata: { error: error.message }
-      });
+        'CUSTOM',
+        'Failed to start proctoring - camera/mic access denied',
+        'HIGH',
+        { error: error.message, timestamp: new Date().toISOString() }
+      );
     }
   };
 
@@ -121,21 +121,26 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
     // Capture screenshot for evidence
     const screenshot = captureScreenshot();
     
-    // Log the violation
-    await logProctoringEvent({
-      examId,
-      candidateId,
-      activityType: violation.type,
-      message: violation.message,
-      severity: violation.severity,
-      metadata: { 
-        ...violation.metadata,
-        violationNumber: violationCountRef.current,
-        warningNumber: warningCountRef.current,
-        timestamp: new Date().toISOString(),
-        screenshot: screenshot ? 'captured' : 'failed'
-      }
-    });
+    // Log the violation using the new API structure
+    try {
+      await logProctoringEvent(
+        examId,
+        candidateId,
+        violation.type,
+        violation.message,
+        violation.severity,
+        { 
+          ...violation.metadata,
+          violationNumber: violationCountRef.current,
+          warningNumber: warningCountRef.current,
+          timestamp: new Date().toISOString(),
+          screenshot: screenshot ? 'captured' : 'failed'
+        }
+      );
+    } catch (error) {
+      console.error('Failed to log proctoring event:', error);
+      // Don't break the flow if logging fails
+    }
 
     // Show warning popup every 10 violations (at 10, 20, 30, 40)
     if (violationCountRef.current % 10 === 0 && warningCountRef.current < 4) {
@@ -185,7 +190,7 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
   const handleVisibilityChange = async () => {
     if (document.hidden) {
       const violation = {
-        type: 'TAB_SWITCH',
+        type: 'INSPECT_WINDOW',
         message: 'You switched to another tab/window',
         severity: 'MEDIUM',
         timestamp: new Date().toISOString(),
@@ -195,14 +200,13 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
       setViolations(prev => [...prev, violation]);
       showViolationWarning(violation);
     } else {
-      await logProctoringEvent({
+      // Log return to tab using common event helper
+      await logCommonProctoringEvent(
         examId,
         candidateId,
-        activityType: 'CUSTOM',
-        message: 'Candidate returned to exam tab',
-        severity: 'LOW',
-        metadata: { event: 'tab_return' }
-      });
+        'CUSTOM',
+        { event: 'tab_return', timestamp: new Date().toISOString() }
+      );
     }
   };
 
@@ -213,7 +217,7 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
 
   const handleWindowBlur = async () => {
     const violation = {
-      type: 'WINDOW_SWITCH',
+      type: 'FOCUS_LOST',
       message: 'You switched to another application',
       severity: 'MEDIUM',
       timestamp: new Date().toISOString(),
@@ -224,14 +228,12 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
   };
 
   const handleWindowFocus = async () => {
-    await logProctoringEvent({
+    await logCommonProctoringEvent(
       examId,
       candidateId,
-      activityType: 'WINDOW_SWITCH',
-      message: 'Candidate returned to exam window',
-      severity: 'LOW',
-      metadata: { event: 'window_focus' }
-    });
+      'CUSTOM',
+      { event: 'window_focus', timestamp: new Date().toISOString() }
+    );
   };
 
   const startFaceDetection = () => {
@@ -242,14 +244,11 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
 
       // Simulate random face detection issues
       if (Math.random() < 0.08) { // 8% chance of face issue
-        const issueType = Math.random() < 0.5 ? 'FACE_NOT_DETECTED' : 'MULTIPLE_FACES';
-        const message = issueType === 'FACE_NOT_DETECTED' 
-          ? 'Face not detected in frame' 
-          : 'Multiple faces detected in frame';
-
+        const issueType = Math.random() < 0.5 ? 'NO_FACE' : 'MULTIPLE_FACES';
+        
         const violation = {
           type: issueType,
-          message,
+          message: issueType === 'NO_FACE' ? 'Face not detected in frame' : 'Multiple faces detected in frame',
           severity: 'HIGH',
           timestamp: new Date().toISOString(),
           metadata: { duration: timeSinceLastDetection }
@@ -259,7 +258,7 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
         showViolationWarning(violation);
       } else if (Math.random() < 0.05) { // 5% chance of insufficient light
         const violation = {
-          type: 'INSUFFICIENT_LIGHT',
+          type: 'CUSTOM',
           message: 'Insufficient lighting detected',
           severity: 'MEDIUM',
           timestamp: new Date().toISOString(),
@@ -278,7 +277,7 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
     setInterval(async () => {
       if (Math.random() < 0.04) { // 4% chance of sound detection
         const violation = {
-          type: 'SOUND_DETECTED',
+          type: 'CUSTOM',
           message: 'Unusual sound detected',
           severity: 'MEDIUM',
           timestamp: new Date().toISOString(),
@@ -516,12 +515,12 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
             <div className="proctoring-stats">
               <div className="stat-item">
                 <span className="stat-label">Tab Switches</span>
-                <span className="stat-value">{getViolationCount('TAB_SWITCH')}</span>
+                <span className="stat-value">{getViolationCount('INSPECT_WINDOW')}</span>
               </div>
               <div className="stat-item">
                 <span className="stat-label">Face Issues</span>
                 <span className="stat-value">
-                  {getViolationCount('FACE_NOT_DETECTED') + getViolationCount('MULTIPLE_FACES')}
+                  {getViolationCount('NO_FACE') + getViolationCount('MULTIPLE_FACES')}
                 </span>
               </div>
               <div className="stat-item">
@@ -532,7 +531,7 @@ const ProctoringMonitor = ({ examId, candidateId, onViolation, onDisqualify }) =
               </div>
               <div className="stat-item">
                 <span className="stat-label">Sound Events</span>
-                <span className="stat-value">{getViolationCount('SOUND_DETECTED')}</span>
+                <span className="stat-value">{getViolationCount('CUSTOM')}</span>
               </div>
             </div>
 

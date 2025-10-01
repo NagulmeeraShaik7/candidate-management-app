@@ -104,21 +104,37 @@ export const getExamResult = async (examId) => {
   }
 };
 
-// 🔐 PROCTORING APIs
-export const logProctoringEvent = async (examId, eventData) => {
+// 🔐 PROCTORING APIs - Updated based on actual API structure
+export const logProctoringEvent = async (examId, candidateId, activityType, message, severity, metadata = {}) => {
   try {
-    console.log("📝 Logging proctoring event:", eventData);
+    console.log("📝 Logging proctoring event:", { 
+      examId, 
+      candidateId, 
+      activityType, 
+      message, 
+      severity, 
+      metadata 
+    });
+    
     const token = getToken();
+    const payload = {
+      examId,
+      candidateId,
+      activityType,
+      message: message || `User performed ${activityType}`,
+      severity: severity || "MEDIUM",
+      metadata: typeof metadata === 'string' ? metadata : JSON.stringify(metadata)
+    };
+
+    console.log("📦 Proctoring payload:", payload);
+
     const res = await fetch(`${API_BASE}/proctoring/log`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        examId,
-        ...eventData
-      }),
+      body: JSON.stringify(payload),
     });
 
     const data = await handleResponse(res);
@@ -126,8 +142,86 @@ export const logProctoringEvent = async (examId, eventData) => {
     return data;
   } catch (error) {
     console.error("❌ Failed to log proctoring event:", error);
-    throw new Error(error.message || "Failed to log proctoring event");
+    // Don't throw error for proctoring failures to avoid breaking exam flow
+    return { success: false, error: error.message };
   }
+};
+
+// Predefined proctoring event types for consistency
+export const ProctoringEvents = {
+  TAB_SWITCH: {
+    activityType: "INSPECT_WINDOW",
+    message: "User switched tab/window",
+    severity: "MEDIUM"
+  },
+  FULLSCREEN_EXIT: {
+    activityType: "FULLSCREEN_EXIT",
+    message: "User exited fullscreen mode",
+    severity: "HIGH"
+  },
+  COPY_ATTEMPT: {
+    activityType: "COPY_ATTEMPT",
+    message: "User attempted to copy content",
+    severity: "HIGH"
+  },
+  PASTE_ATTEMPT: {
+    activityType: "PASTE_ATTEMPT",
+    message: "User attempted to paste content",
+    severity: "HIGH"
+  },
+  RIGHT_CLICK: {
+    activityType: "RIGHT_CLICK",
+    message: "User right-clicked on page",
+    severity: "MEDIUM"
+  },
+  DEVTOOLS_OPEN: {
+    activityType: "DEVTOOLS_OPEN",
+    message: "User opened developer tools",
+    severity: "HIGH"
+  },
+  FOCUS_LOST: {
+    activityType: "FOCUS_LOST",
+    message: "User switched to another application",
+    severity: "MEDIUM"
+  },
+  MULTIPLE_PEOPLE: {
+    activityType: "MULTIPLE_PEOPLE",
+    message: "Multiple people detected",
+    severity: "HIGH"
+  },
+  NO_FACE: {
+    activityType: "NO_FACE",
+    message: "No face detected",
+    severity: "MEDIUM"
+  },
+  MULTIPLE_FACES: {
+    activityType: "MULTIPLE_FACES",
+    message: "Multiple faces detected",
+    severity: "HIGH"
+  },
+  PHONE_USAGE: {
+    activityType: "PHONE_USAGE",
+    message: "Phone usage detected",
+    severity: "HIGH"
+  }
+};
+
+// Helper function for common proctoring events
+export const logCommonProctoringEvent = (examId, candidateId, eventType, customMetadata = {}) => {
+  const event = ProctoringEvents[eventType];
+  if (!event) {
+    console.error("❌ Unknown proctoring event type:", eventType);
+    return;
+  }
+
+  return logProctoringEvent(
+    examId,
+    candidateId,
+    event.activityType,
+    event.message,
+    event.severity,
+    { ...customMetadata, timestamp: new Date().toISOString() }
+  );
 };
 
 export const getProctoringLogs = async (examId) => {
@@ -147,6 +241,22 @@ export const getProctoringLogs = async (examId) => {
   } catch (error) {
     console.error("❌ Failed to fetch proctoring logs:", error);
     throw new Error(error.message || "Failed to fetch proctoring logs");
+  }
+};
+
+// Get proctoring summary (counts by type and severity)
+export const getProctoringSummary = async (examId) => {
+  try {
+    const logs = await getProctoringLogs(examId);
+    return {
+      totalLogs: logs.totalLogs,
+      countsByType: logs.countsByType,
+      countsBySeverity: logs.countsBySeverity,
+      candidateInfo: logs.candidateId
+    };
+  } catch (error) {
+    console.error("❌ Failed to get proctoring summary:", error);
+    throw error;
   }
 };
 
