@@ -177,4 +177,6 @@ https://candidate-management-app-tan.vercel.app/
 
 # Demo Video
 
-<video controls src="20251004-0833-24.0642789.mp4" title="Title"></video>
+ https://youtu.be/da7eOvXfxno
+
+ 
