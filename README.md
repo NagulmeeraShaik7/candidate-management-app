@@ -1,46 +1,40 @@
 # Candidate Management App
 
-A modern, full-featured React application for managing candidate information. This app allows users to add, edit, delete, search, and filter candidates with a responsive and user-friendly interface. It is designed for HR teams, recruiters, or anyone who needs to keep track of candidate data efficiently.
+A modern, full-featured React application for managing candidate information. This app allows users to add, edit, delete, search, and filter candidates with a responsive and user-friendly interface. It also includes an exam flow for candidates with simulated proctoring and result reporting.
 
 ---
 
 ## ✨ Features
 
-- **List Candidates:** View all candidates in a sortable, paginated table.
-- **Add/Edit/Delete:** Easily add new candidates, update their information, or remove them.
-- **Search & Filter:** Quickly find candidates by name, email, phone, gender, qualification, experience, or skills.
-- **Responsive UI:** Works seamlessly on desktop and mobile devices.
-- **Error Handling:** Custom error pages for 400, 404, and 500 HTTP errors.
-- **Component-Based:** Clean, modular React components for maintainability.
-- **Styling:** Custom CSS and Bootstrap Icons for a modern look.
-- **Testing:** Includes unit tests with Jest and React Testing Library.
+- List, add, edit, and delete candidates with pagination.
+- Role-based routing (admin vs candidate) and protected routes.
+- Candidate exam flow with timer, simulated proctoring, auto-submit and disqualification logic.
+- Detailed exam results with auto-grading for MCQ/MSQ/short/descriptive answers.
+- Client-side validation and helpful error pages for 400/404/500 responses.
 
 ---
 
-## 📁 Project Structure
+## 📁 Project Structure (high-level)
 
 ```
 candidate-management-app/
 ├── public/
-│   └── index.html
 ├── src/
-│   ├── App.css
-│   ├── App.jsx
-│   ├── App.test.js
-│   ├── index.css
+│   ├── App.jsx               # Router, role-based routes
 │   ├── index.js
-│   ├── logo.svg
-│   ├── reportWebVitals.js
-│   ├── setupTests.js
+│   ├── services/
+│   │   └── examService.js    # API helpers + proctoring event logging
 │   └── components/
-│       ├── CandidateForm.css
-│       ├── CandidateForm.jsx
-│       ├── CandidateTable.css
-│       ├── CandidateTable.jsx
-│       ├── ErrorPage.css
-│       ├── ErrorPage.jsx
-│       ├── FilterSidebar.css
-│       └── FilterSidebar.jsx
+│       ├── CandidateTable/
+│       ├── CandidateForm/
+│       ├── FilterSidebar/
+│       ├── Login/
+│       ├── Register/
+│       ├── ExamDashboard/
+│       ├── ExamPage/
+│       ├── ProctoringMonitor/
+│       ├── ExamResult/
+│       └── ErrorPage/
 ├── package.json
 └── README.md
 ```
@@ -49,60 +43,37 @@ candidate-management-app/
 
 ## 🛠️ Prerequisites
 
-- [Node.js](https://nodejs.org/) (version 20 or higher recommended)
-- [npm](https://www.npmjs.com/) (comes with Node.js)
+- Node.js (v16+ recommended)
+- npm
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Development quick start
 
-### 1. **Clone the Repository**
+1. Clone and install:
 
-```sh
-git clone https://github.com/NagulmeeraShaik7/candidate-management-app
-cd candidate-management-app
-```
-
-### 2. **Install Dependencies**
-
-Install all required npm packages:
-
-```sh
+```powershell
+git clone https://github.com/NagulmeeraShaik7/candidate-management-app ; cd candidate-management-app
 npm install
 ```
 
-### 3. **Start the Development Server**
+2. Start the dev server:
 
-This will start the app in development mode. Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-```sh
+```powershell
 npm start
 ```
 
-- The page will reload automatically if you make edits.
-- You will see build errors and lint warnings in the console.
+3. Run tests:
 
-### 4. **Build for Production**
-
-To create an optimized production build in the `build/` directory:
-
-```sh
-npm run build
-```
-
-- This bundles React in production mode and optimizes the build for best performance.
-- The build is minified and filenames include the hashes.
-
-### 5. **Run Tests**
-
-To run the test suite using Jest and React Testing Library:
-
-```sh
+```powershell
 npm test
 ```
 
-- This launches the test runner in interactive watch mode.
-- Tests are located in files with `.test.js` extension, such as `src/App.test.js`.
+4. Build for production:
+
+```powershell
+npm run build
+```
 
 ---
 
@@ -119,33 +90,82 @@ npm test
 
 ## 🌐 Backend API
 
-This app expects a backend API with the following endpoints:
+The app uses an API base configured in code as `https://candidate-management-app-backend.onrender.com/api`.
 
-- `GET /api/candidates` — List all candidates
-- `POST /api/candidates` — Add a new candidate
-- `PUT /api/candidates/:id` — Update a candidate
-- `DELETE /api/candidates/:id` — Delete a candidate
+Common endpoints used by the frontend:
 
-**Default API URL:**  
-`https://candidate-management-app-backend.onrender.com/api/candidates`
+- `POST /api/auth/login` — login, returns token
+- `POST /api/auth/register` — register new user
+- `POST /api/auth/logout` — logout
+- `GET /api/candidates?page=&limit=` — paginated list
+- `POST /api/candidates` — create candidate
+- `PUT /api/candidates/:id` — update candidate
+- `DELETE /api/candidates/:id` — delete candidate
+- `POST /api/exam/generate` — generate/start exam for candidate
+- `GET /api/exam/:examId` — get exam details
+- `POST /api/exam/:examId/submit` — submit exam answers
+- `GET /api/exam/:examId/result` — get exam result
+- Proctoring endpoints: `POST /api/proctoring/log`, `GET /api/proctoring/:examId`
 
-If you want to use your own backend, update the API endpoint in the source code.
+If you prefer environment-based configuration, extract `API_BASE` in `src/services/examService.js` to an env var like `REACT_APP_API_BASE`.
+
+---
+
+## Components & Services (detailed)
+
+This project contains the following important components and services. The summary below lists purpose, props, state highlights, API interactions, and developer notes.
+
+- `src/services/examService.js` — centralized API layer and helpers:
+	- getExamDetails, submitExam, getExamResult
+	- proctoring helpers: logProctoringEvent, getProctoringLogs, getProctoringSummary
+	- formatting and validation helpers: formatAnswersForSubmission, validateAnswersBeforeSubmit
+	- Notes: uses token from localStorage/sessionStorage and `handleResponse` to parse API responses.
+
+- `src/components/CandidateTable/CandidateTable.jsx` — Admin dashboard
+	- Fetches paginated candidate lists, supports search, client-side filters (gender, qualification, experience, skills), pagination, and delete.
+	- Shows `CandidateForm` modal for Add/Edit.
+	- Handles 401/403 by clearing token and redirecting to `/login`, routes to `/error/:code` for other server errors.
+
+- `src/components/CandidateForm/CandidateForm.jsx` — Add/Edit candidate form
+	- Props: `onClose()`, `onSaved()`, `candidate` (optional)
+	- Validates fields (name, phone, email, skills) and posts to create/update endpoints.
+
+- `src/components/FilterSidebar/FilterSidebar.jsx` — sidebar filter UI
+	- Props: `onClose()`, `onFilter(filters)`
+	- Validates experience range and returns filter object to parent.
+
+- `src/components/Login/Login.jsx` — Login page
+	- Calls `POST /api/auth/login`, stores token in localStorage and redirects (admin -> `/`, user -> `/exam-dashboard`).
+	- Includes role selection and password show/hide UX.
+
+- `src/components/Register/Register.jsx` — Registration page
+	- Calls `POST /api/auth/register` and redirects to `/login` on success.
+
+- `src/components/ExamDashboard/ExamDashboard.jsx` — Candidate dashboard
+	- Tries to find candidate by decoding token and searching paginated candidates. Starts exam generation via `POST /api/exam/generate`.
+
+- `src/components/ExamPage/ExamPage.jsx` — Exam taking UI
+	- Loads exam with `getExamDetails`, initializes answers, renders questions and progress, includes timer and submit flow.
+	- Integrates `ProctoringMonitor` and acts on `onViolation` / `onDisqualify` (auto-submit and disqualify flows).
+
+- `src/components/ProctoringMonitor/ProctoringMonitor.jsx` — Proctoring simulation
+	- Uses `navigator.mediaDevices.getUserMedia` for video/audio (small feed), detects tab/window changes, simulates face/sound/inspect events, logs via `logProctoringEvent`.
+	- Tracks warnings and triggers `onDisqualify` after repeated violations.
+
+- `src/components/ExamResult/ExamResult.jsx` — Results & analysis
+	- Fetches result and exam details, auto-grades various types (mcq, msq, short, descriptive) with normalization, presents detailed per-question comparison, and printing.
+
+- `src/components/ErrorPage/ErrorPage.jsx` — Friendly error page
 
 ---
 
-## 🖌️ Customization
+## Development notes & recommended improvements
 
-- **Icons:** Uses [Bootstrap Icons](https://icons.getbootstrap.com/) via CDN in `public/index.html`.
-- **Styling:** Custom CSS for each component for a modern look.
-- **Routing:** Uses `react-router-dom` for navigation and error pages.
-
----
-
-## 📦 Deployment
-
-After building the app (`npm run build`), deploy the contents of the `build/` directory to your preferred static hosting service (e.g., Netlify, Vercel, GitHub Pages).
-
-- Deployment URL: https://candidate-management-app-tan.vercel.app/
+- Move `API_BASE` to an environment variable (e.g., `REACT_APP_API_BASE`) for easier environment switching.
+- Centralize token decoding and JWT error handling to avoid try/catch duplicate logic across components.
+- Replace simulated proctoring with an actual detection pipeline (server-side or browser ML) for production use.
+- Expand test coverage: add unit tests for service helpers (`examService`) and component integration tests for key flows (login, candidate CRUD, exam lifecycle).
 
 ---
+
 
