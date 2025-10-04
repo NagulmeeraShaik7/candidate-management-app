@@ -168,4 +168,9 @@ This project contains the following important components and services. The summa
 
 ---
 
+# Deployed URL
 
+```
+https://candidate-management-app-tan.vercel.app/
+
+```
