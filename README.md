@@ -174,3 +174,7 @@ This project contains the following important components and services. The summa
 https://candidate-management-app-tan.vercel.app/
 
 ```
+
+# Demo Video
+
+<video controls src="20251004-0833-24.0642789.mp4" title="Title"></video>
